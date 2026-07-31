@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no" />
+    <meta name="theme-color" content="#7f1d1d" />
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="apple-touch-icon" href="/icon-192.png" />
+    <title>Student Crib</title>
+    <script>
+      // Applies the saved theme before React loads, so there's no flash
+      // of light mode on a dark-mode reload. Mirrors the logic in
+      // src/hooks/useTheme.ts — keep the two in sync if this ever changes.
+      (function () {
+        var mode = localStorage.getItem("crib-theme") || "system";
+        var prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+        var isDark = mode === "dark" || (mode === "system" && prefersDark);
+        if (isDark) document.documentElement.classList.add("dark");
+      })();
+    </script>
+  </head>
+  <body class="bg-gray-50 dark:bg-gray-900 transition-colors">
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+    <script>
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("/sw.js");
+      }
+    </script>
+  </body>
+</html>
