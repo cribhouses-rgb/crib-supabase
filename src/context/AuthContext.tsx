@@ -34,6 +34,8 @@ interface AuthContextValue {
   profile: UserProfile | null;
   signInWithGoogle: () => Promise<void>;
   signInWithEmail: (email: string, password: string) => Promise<void>;
+  /** Creates a brand-new account with email + password (the non-Google signup path). */
+  signUpWithEmail: (email: string, password: string) => Promise<SignupResult>;
   signOutUser: () => Promise<void>;
   createProfile: (role: UserRole, universityId: string) => Promise<SignupResult>;
   completeProfile: (fullName: string, phone: string) => Promise<SignupResult>;
@@ -134,6 +136,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function signInWithEmail(email: string, password: string) {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw error;
+  }
+
+  async function signUpWithEmail(email: string, password: string): Promise<SignupResult> {
+    const { error } = await supabase.auth.signUp({ email, password });
+    if (error) {
+      return { ok: false, error: error.message };
+    }
+    // onAuthStateChange picks up the new session automatically (assuming
+    // "Confirm email" is disabled in Supabase's Auth settings — if it's
+    // enabled, the user gets a confirmation email instead and won't have
+    // a session until they click it, so this returns ok:true either way
+    // and the UI just waits for the auth state to update).
+    return { ok: true };
   }
 
   async function signOutUser() {
@@ -266,7 +281,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     <AuthContext.Provider
       value={{
         status, firebaseUser, profile,
-        signInWithGoogle, signInWithEmail, signOutUser,
+        signInWithGoogle, signInWithEmail, signUpWithEmail, signOutUser,
         createProfile, completeProfile, setupPassword, resetPassword,
         deleteAccount, reauthenticate,
       }}
