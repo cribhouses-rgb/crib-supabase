@@ -1,4 +1,5 @@
 import { supabase } from "../supabaseClient";
+import { compressImage } from "./imageCompression";
 import type {
   Listing,
   ListingInput,
@@ -296,8 +297,15 @@ const PHOTOS_BUCKET = "photos";
 /**
  * Uploads to a Supabase Storage bucket called "photos" — create this
  * bucket once in the Supabase dashboard (Storage → New bucket → name it
- * "photos" → public) before this is used for real. Enforces the same
- * 5MB-per-file limit the Firebase version had client-side.
+ * "photos" → public) before this is used for real.
+ *
+ * Every image is compressed client-side first (resized to a max 1600px
+ * edge, re-encoded as JPEG, targeting ~800KB) before it ever leaves the
+ * phone — this is what actually keeps Storage usage and the person's own
+ * upload data usage down, not just a size cap on the raw file. The raw
+ * size limit below is deliberately generous (20MB) since modern phone
+ * cameras routinely produce 8–15MB photos that compression handles fine;
+ * it's just a sanity check against someone picking something absurd.
  */
 export async function uploadImages(
   folder: string,
@@ -306,11 +314,12 @@ export async function uploadImages(
 ): Promise<string[]> {
   const urls: string[] = [];
   for (let i = 0; i < files.length; i++) {
-    if (files[i].size > 5 * 1024 * 1024) {
-      throw new Error(`Image ${i + 1} exceeds 5MB limit.`);
+    if (files[i].size > 20 * 1024 * 1024) {
+      throw new Error(`Image ${i + 1} is too large to process.`);
     }
+    const compressed = await compressImage(files[i]);
     const path = `${folder}/${docId}/${Date.now()}_${i}.jpg`;
-    const { error } = await supabase.storage.from(PHOTOS_BUCKET).upload(path, files[i]);
+    const { error } = await supabase.storage.from(PHOTOS_BUCKET).upload(path, compressed);
     assertNoError(error);
     const { data } = supabase.storage.from(PHOTOS_BUCKET).getPublicUrl(path);
     urls.push(data.publicUrl);
