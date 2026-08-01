@@ -77,9 +77,13 @@ export default function AddListingForm({ onBack, onToast }: Props) {
       setPhotoError("Maximum 10 photos per listing.");
       return;
     }
-    const oversized = files.find((f) => f.size > 5 * 1024 * 1024);
+    // The raw pre-upload limit is generous — compression happens
+    // automatically on submit and brings even a large phone photo down
+    // to a few hundred KB, so there's no need to reject normal camera
+    // photos here. This just guards against something absurd.
+    const oversized = files.find((f) => f.size > 20 * 1024 * 1024);
     if (oversized) {
-      setPhotoError(`"${oversized.name}" is over 5MB — please use a smaller photo.`);
+      setPhotoError(`"${oversized.name}" is too large to use.`);
       return;
     }
 
@@ -296,7 +300,7 @@ export default function AddListingForm({ onBack, onToast }: Props) {
 
         <div>
           <label className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2 block">
-            Photos <span className="text-gray-400 dark:text-gray-500">(up to 10, max 5MB each)</span>
+            Photos <span className="text-gray-400 dark:text-gray-500">(up to 10 — compressed automatically)</span>
           </label>
           <div className="grid grid-cols-4 gap-2">
             {photoPreviews.map((src, i) => (
