@@ -491,6 +491,7 @@ export async function updateMarketItem(id: string, data: Partial<MarketItem>): P
   if (data.status !== undefined) row.status = data.status;
   if (data.title !== undefined) row.title = data.title;
   if (data.price !== undefined) row.price = data.price;
+  if (data.photos !== undefined) row.photos = data.photos;
   const { error } = await supabase.from("marketplace").update(row).eq("id", id);
   assertNoError(error);
 }
