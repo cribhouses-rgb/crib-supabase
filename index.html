@@ -24,7 +24,16 @@
     <script type="module" src="/src/main.tsx"></script>
     <script>
       if ("serviceWorker" in navigator) {
-        navigator.serviceWorker.register("/sw.js");
+        navigator.serviceWorker.register("/sw.js").catch((err) => {
+          // Service worker registration is a nice-to-have (enables the
+          // "Install app" PWA prompt and offline caching) — it's not
+          // required for the app to work, so a failure here (e.g.
+          // someone testing in a private/incognito tab, which many
+          // browsers restrict service workers in) should never surface
+          // as an unhandled rejection in the error log. Just note it
+          // quietly in the console instead.
+          console.warn("Service worker registration skipped:", err);
+        });
       }
     </script>
   </body>
